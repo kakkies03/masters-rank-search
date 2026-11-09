@@ -1,0 +1,294 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>マスターズ順位サーチ（テスト）</title>
+<meta name="description" content="ジャンボウポイント（ナショナル）2023〜2026年のマスターズ水泳の記録を、選手名から検索できます。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --bg:#f3f6f8; --surface:#ffffff; --sunk:#e7edf1; --line:#d3dde4;
+  --fg:#10202b; --muted:#5a6b77; --accent:#0a6ea8; --accent-weak:#d8eaf5;
+  --rope-a:#d8432e; --rope-b:#f1c232; --good:#1f8a4c; --hl:#fff4c7;
+  --body:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0b1820; --surface:#11232e; --sunk:#0e1d26; --line:#22394a;
+  --fg:#e3eef4; --muted:#93a8b6; --accent:#5ab4e8; --accent-weak:#143347;
+  --rope-a:#e5624e; --rope-b:#e8c04a; --good:#4cc283; --hl:#3a3413; color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.6}
+a{color:var(--accent)}
+.wrap{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header{background:var(--surface);border-bottom:1px solid var(--line)}
+header .wrap{padding-block:22px 18px;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+.rope{height:6px;background:repeating-linear-gradient(90deg,var(--rope-a) 0 18px,var(--surface) 18px 22px,var(--rope-b) 22px 40px,var(--surface) 40px 44px)}
+h1{font-weight:900;font-size:clamp(22px,4vw,30px);margin:0;letter-spacing:.02em}
+h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-spacing:.08em}
+h2{font-size:17px;margin:0;font-weight:700}
+.label{font-size:11px;letter-spacing:.12em;color:var(--muted);font-weight:700}
+main .wrap{padding-block:20px 40px;display:grid;grid-template-columns:minmax(0,1fr);gap:18px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font-family:var(--mono);font-size:12px;padding:4px 10px;border-radius:999px;background:var(--sunk);border:1px solid var(--line);white-space:nowrap}
+.chip.on{background:var(--accent-weak);border-color:var(--accent)}
+button{font:inherit;font-size:14px;font-weight:700;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--surface);padding:8px 14px;cursor:pointer}
+button:disabled{opacity:.5;cursor:default}
+button:focus-visible,input:focus-visible,tr:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input[type=search],input[type=text]{font:inherit;font-size:16px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);min-width:0}
+#q{flex:1 1 260px}
+.sugg{display:grid;gap:4px;margin-top:10px}
+.sugg button{text-align:left;background:var(--sunk);color:var(--fg);border:1px solid var(--line);font-weight:500;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.sugg button span{color:var(--muted);font-size:12px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.card{background:var(--sunk);border-radius:8px;padding:12px 14px;min-width:0}
+.card .y{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--muted)}
+.card .sub{font-size:12px;color:var(--muted)}
+.card .two{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+.card .two>div{min-width:0}
+.card .mid{font-family:var(--mono);font-size:19px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.25}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:7px 10px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+th{background:var(--sunk);font-size:11px;letter-spacing:.06em;color:var(--muted);position:sticky;top:0;cursor:pointer;user-select:none}
+td.n,th.n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+td.meet{white-space:normal;min-width:220px;color:var(--muted)}
+#entTbl tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--accent-weak)}
+tr.me{background:var(--hl)!important;font-weight:700}
+.pill{display:inline-block;font-family:var(--mono);font-size:11px;padding:1px 7px;border-radius:999px;background:var(--accent-weak)}
+.pill.top{background:var(--good);color:var(--surface)}
+.pool{display:inline-block;font-size:11px;font-weight:700;padding:0 6px;border-radius:4px;border:1px solid var(--line);color:var(--muted)}
+.pool.L{border-color:var(--accent);color:var(--accent)}
+.muted{color:var(--muted)}
+.note{font-size:12px;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
+.grid2>*{min-width:0}
+svg text{fill:var(--muted);font-family:var(--mono);font-size:10px}
+.status{font-size:13px;color:var(--muted)}
+.bar{height:4px;background:var(--sunk);border-radius:2px;overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
+.empty ol{margin:0;padding-left:1.3em;color:var(--muted)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;border-radius:0;background:transparent;color:var(--fg);font-weight:500;padding:6px 12px}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--surface);font-weight:700}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-bottom:4px}
+.legend i{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:5px;border-radius:2px}
+footer{padding:0 0 40px}
+footer .wrap{font-size:12px;color:var(--muted);display:grid;gap:4px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<header>
+  <div class="rope"></div>
+  <div class="wrap">
+    <h1><small>JAMBOW NATIONAL POINT · 2023–2026</small>マスターズ順位サーチ</h1>
+    <div class="chips" id="yearChips"></div>
+    <div class="muted" id="updated" style="font-size:.8em;margin-top:4px"></div>
+  </div>
+</header>
+
+<main><div class="wrap">
+  <section class="panel">
+    <div class="row">
+      <input type="search" id="q" placeholder="名前で検索（例: 山田 太郎／山田）" autocomplete="off" disabled>
+      <input type="text" id="club" placeholder="所属で絞り込み（任意）" style="flex:0 1 200px" autocomplete="off" disabled>
+      <button id="go" disabled>検索</button>
+    </div>
+    <div class="status" id="status">データを読み込んでいます…</div>
+    <div class="bar" id="bar"><i></i></div>
+    <div class="sugg" id="sugg"></div>
+    <div class="empty" id="emptyHelp" style="margin-top:10px">
+      <div class="note">選手名で検索すると、次の内容が表示されます。</div>
+      <ol>
+        <li>年ごとのベストポイントと順位（長水路・短水路別、同性内で上位何％か）</li>
+        <li>種目別のタイム・ポイント推移（2023→2026）</li>
+        <li>全エントリーの一覧と、同じ年・性別・プール・種目・年齢区分の中での順位</li>
+        <li>行をクリックすると、その区分のランキング表（自分の前後）</li>
+      </ol>
+    </div>
+  </section>
+  <section class="panel" id="person" hidden></section>
+  <section class="panel" id="ranking" hidden></section>
+</div></main>
+
+<footer><div class="wrap">
+  <div>出典：<a href="https://jambowpoint.jp/" target="_blank" rel="noopener">ジャンボウポイント</a>（ナショナルポイント）。2026年は集計途中のデータです。</div>
+  <div>記録の正確性は保証されません。正式な記録は各大会・ジャンボウポイントの公式情報をご確認ください。</div>
+  <div>運営：<a href="https://shop.freakers.net/" target="_blank" rel="noopener">Freakers</a></div>
+</div></footer>
+
+<script>
+(()=>{
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const norm=s=>String(s||'').normalize('NFKC').replace(/[\s　]+/g,'').toLowerCase();
+const fmt=n=>Number(n).toLocaleString('ja-JP');
+let YEARS=[2023,2024,2025,2026];
+const POOLS=['長水路','短水路'];
+const SEX=['男子','男子','女子','女子'], POOL=['長水路','短水路','長水路','短水路'];
+const pS=p=>p==='長水路'?'長':'短';
+const poolTag=p=>`<span class="pool ${p==='長水路'?'L':''}">${pS(p)}</span>`;
+const ageLbl=a=>a===18?'18〜24':`${a}〜${a+4}`;
+const tFmt=c=>{const m=Math.floor(c/6000),s=Math.floor(c/100)%60,h=c%100;return (m?m+':'+String(s).padStart(2,'0'):s)+'.'+String(h).padStart(2,'0');};
+const reduceMotion=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const data={}; let setSize={}, groupIdx=null, current=null, poolFilter='all';
+let NK=[];
+
+// ---------- load ----------
+async function boot(){
+  const bar=$('#bar i'); let done=0; const total=YEARS.length+1;
+  const step=()=>{done++;bar.style.width=(done/total*100)+'%';};
+  try{
+    const D=await fetch('data/dict.json').then(r=>{if(!r.ok)throw 0;return r.json();}); step();
+    NK=D.names.map(norm);
+    if(Array.isArray(D.years)&&D.years.length) YEARS=D.years;
+    if(D.updated) $('#updated').textContent=`データ更新日：${D.updated}`;
+    renderChips();
+    await Promise.all(YEARS.map(async y=>{
+      const a=await fetch(`data/${y}.json`).then(r=>{if(!r.ok)throw 0;return r.json();});
+      const out=new Array(a.length/9);
+      for(let i=0,j=0;i<a.length;i+=9,j++){
+        const g=a[i];
+        out[j]={y,sex:SEX[g],pool:POOL[g],rank:a[i+1],name:D.names[a[i+2]],nk:NK[a[i+2]],age:a[i+3],ev:D.evs[a[i+4]],club:D.clubs[a[i+5]],meet:D.meets[a[i+6]],time:tFmt(a[i+7]),pts:a[i+8]};
+      }
+      data[y]=out; step(); renderChips();
+    }));
+    for(const y in data) for(const r of data[y]){const k=`${y}|${r.sex}|${r.pool}`;setSize[k]=(setSize[k]||0)+1;}
+    $('#status').textContent=''; $('#bar').hidden=true;
+    ['#q','#club','#go'].forEach(s=>$(s).disabled=false); $('#q').focus();
+  }catch(e){ $('#status').textContent='データを読み込めませんでした。時間をおいて再読み込みしてください。'; }
+}
+function renderChips(){
+  $('#yearChips').innerHTML=YEARS.map(y=>data[y]?`<span class="chip on">${y} · ${fmt(data[y].length)}件</span>`:`<span class="chip">${y} …</span>`).join('');
+}
+
+// ---------- group ranks ----------
+const gkey=r=>`${r.y}|${r.sex}|${r.pool}|${r.ev}|${r.age}`;
+function buildGroups(){
+  if(groupIdx) return groupIdx;
+  const best={};
+  for(const y in data) for(const r of data[y]){ const g=gkey(r); const o=best[g]||(best[g]=new Map()); if(!(o.get(r.nk)>=r.pts)) o.set(r.nk,r.pts); }
+  groupIdx={}; for(const g in best){ const arr=[...best[g].values()].sort((a,b)=>b-a); const n=arr.length; const mean=arr.reduce((s,v)=>s+v,0)/n; const sd=Math.sqrt(arr.reduce((s,v)=>s+(v-mean)**2,0)/n); groupIdx[g]={arr,m:best[g],mean,sd}; }
+  return groupIdx;
+}
+function groupRank(r){ const G=buildGroups()[gkey(r)]; if(!G) return [null,0]; const arr=G.arr;
+  let lo=0,hi=arr.length; while(lo<hi){const m=(lo+hi)>>1; if(arr[m]>r.pts) lo=m+1; else hi=m;}
+  if(G.m.get(r.nk)>r.pts) lo--; return [lo+1,arr.length]; }
+function hensa(r){ const G=buildGroups()[gkey(r)]; if(!G||G.arr.length<2||!G.sd) return null; return 50+10*(r.pts-G.mean)/G.sd; }
+const hsTxt=v=>v==null?'—':v.toFixed(1);
+const grPill=e=>e.gr?`<span class="pill ${e.gr<=3?'top':''}">${e.gr}位</span><span class="muted"> / ${fmt(e.gn)}人</span>${e.hs!=null?` <span class="muted">·</span> 偏差値 <b>${hsTxt(e.hs)}</b>`:''}`:'—';
+
+// ---------- search ----------
+function suggest(){
+  const q=norm($('#q').value), cq=norm($('#club').value), box=$('#sugg');
+  if(!q){box.innerHTML='';return;}
+  const m=new Map();
+  for(const y of YEARS){ if(!data[y]) continue; for(const r of data[y]){ if(!r.nk.includes(q)) continue; if(cq&&!norm(r.club).includes(cq)) continue;
+    const k=r.nk+'\u0000'+r.sex; const o=m.get(k)||{name:r.name,nk:r.nk,sex:r.sex,clubs:new Set(),n:0,ys:new Set(),best:0}; o.n++; o.ys.add(y); o.clubs.add(r.club); o.best=Math.max(o.best,r.pts); m.set(k,o);} }
+  const list=[...m.values()].sort((a,b)=>(a.nk===q?-1:0)-(b.nk===q?-1:0)||b.best-a.best).slice(0,30);
+  if(!list.length){box.innerHTML='<div class="note">該当する選手が見つかりません。姓だけ、名だけでも検索できます。</div>';return;}
+  box.innerHTML=(m.size>30?`<div class="note">${fmt(m.size)}件中、上位30件を表示しています。所属で絞り込めます。</div>`:'')+
+    list.map(o=>`<button data-n="${esc(o.nk)}" data-s="${esc(o.sex)}">${esc(o.name)}（${esc(o.sex)}）　<span>${[...o.clubs].map(esc).join('・')} · ${[...o.ys].sort().join('/')} · ${o.n}エントリー · 最高 ${fmt(o.best)}pt</span></button>`).join('');
+}
+let timer; $('#q').addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(suggest,250);});
+$('#club').addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(suggest,250);});
+$('#go').addEventListener('click',suggest);
+$('#q').addEventListener('keydown',e=>{if(e.key==='Enter'){suggest();const bs=$('#sugg').querySelectorAll('button');if(bs.length===1)bs[0].click();}});
+$('#sugg').addEventListener('click',e=>{const b=e.target.closest('button[data-n]');if(b) showPerson(b.dataset.n,b.dataset.s);});
+
+// ---------- person ----------
+let entries=[], sortKey='y', sortDir=-1;
+const bestOf=es=>es.reduce((a,c)=>c.pts>a.pts?c:a);
+const pctTxt=(rank,tot)=>{const p=rank/tot*100;return p<1?p.toFixed(2):p.toFixed(1);};
+function showPerson(nk,sex){
+  current={nk,sex}; $('#emptyHelp').hidden=true; entries=[];
+  for(const y of YEARS){ if(!data[y]) continue; for(const r of data[y]) if(r.nk===nk&&r.sex===sex){ const [gr,gn]=groupRank(r); entries.push({...r,gr,gn,hs:hensa(r),tot:setSize[`${r.y}|${r.sex}|${r.pool}`]}); } }
+  const name=entries.length?entries[0].name:'';
+  const clubs=[...new Set([...entries].sort((a,b)=>b.y-a.y).map(e=>e.club))];
+  const el=$('#person'); el.hidden=false;
+  const cell=es=>{ if(!es.length) return `<div class="mid muted">—</div><div class="sub">記録なし</div>`; const b=bestOf(es);
+    return `<div class="mid">${fmt(b.pts)}<span class="sub"> pt</span></div><div class="sub">${fmt(b.rank)}位 / ${fmt(b.tot)}（上位${pctTxt(b.rank,b.tot)}%）</div><div class="sub">${esc(b.ev)} ${esc(b.time)}</div><div class="sub">${ageLbl(b.age)}歳区分 ${grPill(b)}</div>`; };
+  const cards=YEARS.map(y=>{ const es=entries.filter(e=>e.y===y);
+    return `<div class="card"><div class="y">${y} <span class="sub">· ${es.length}エントリー</span></div><div class="two">${POOLS.map(p=>`<div>${poolTag(p)}${cell(es.filter(e=>e.pool===p))}</div>`).join('')}</div></div>`; }).join('');
+  el.innerHTML=`
+    <div class="row" style="justify-content:space-between;margin-bottom:12px">
+      <div><div class="label">選手 · ${esc(sex)}</div><h2 style="font-size:22px">${esc(name)}</h2><div class="note">所属: ${clubs.map(esc).join('・')}</div></div>
+      <div class="note">同じ名前・性別の記録をまとめています（同姓同名の別人が混ざる場合があります）</div>
+    </div>
+    <div class="cards">${cards}</div>
+    <p class="note" style="margin:6px 0 0">順位は同じ年・性別・プールの中での総合順位（全種目・全年齢、エントリー単位）です。</p>
+    <div class="grid2" style="margin-top:18px">
+      <div><div class="label" style="margin-bottom:6px">年ごとのベストポイント</div>${chart()}</div>
+      <div><div class="row" style="justify-content:space-between;margin-bottom:6px"><div class="label">種目別ベスト（各年）</div>
+        <div class="seg" id="poolSeg">${[['all','すべて'],['長水路','長水路'],['短水路','短水路']].map(([v,l])=>`<button aria-pressed="${poolFilter===v}" data-p="${v}">${l}</button>`).join('')}</div></div>
+        <div class="tbl" id="matTbl"></div></div>
+    </div>
+    <div class="label" style="margin:18px 0 6px">全エントリー（<span id="entN"></span>件）· 行をクリックでその区分のランキング</div>
+    <div class="tbl" id="entTbl"></div>
+    <p class="note">「区分内順位」は同じ年・性別・プール・種目・年齢区分の中での順位です（各選手のベスト1本で比較）。「偏差値」はその区分のポイント分布に対する値で、人数が少ない区分では振れが大きくなります。</p>`;
+  renderMatrix(); renderEntries();
+  el.scrollIntoView({behavior:reduceMotion()?'auto':'smooth',block:'start'});
+  $('#ranking').hidden=true;
+}
+const pf=e=>poolFilter==='all'||e.pool===poolFilter;
+function evSort(a,b){ const d=s=>parseInt(s)||0; const k=['自由形','背泳ぎ','平泳ぎ','バタフライ','個人メドレー']; const ka=k.findIndex(x=>a.includes(x)), kb=k.findIndex(x=>b.includes(x)); return ka-kb||d(a)-d(b); }
+function renderMatrix(){
+  const es=entries.filter(pf);
+  const keys=[...new Set(es.map(e=>e.ev+'\u0000'+e.pool))].sort((a,b)=>{const[ea,pa]=a.split('\u0000'),[eb,pb]=b.split('\u0000');return evSort(ea,eb)||POOLS.indexOf(pa)-POOLS.indexOf(pb);});
+  const rows=keys.map(k=>{const[ev,pool]=k.split('\u0000'); const cells=YEARS.map(y=>{ const g=es.filter(e=>e.y===y&&e.ev===ev&&e.pool===pool); if(!g.length) return '<td class="n muted">—</td>'; const b=bestOf(g); return `<td class="n">${esc(b.time)}<br><span class="muted">${fmt(b.pts)}pt</span><br>${grPill(b)}</td>`; }).join(''); return `<tr><td>${poolTag(pool)} ${esc(ev)}</td>${cells}</tr>`; }).join('');
+  $('#matTbl').innerHTML=`<table><thead><tr><th>種目</th>${YEARS.map(y=>`<th class="n">${y}</th>`).join('')}</tr></thead><tbody>${rows||'<tr><td colspan="5" class="muted">記録なし</td></tr>'}</tbody></table>`;
+}
+function chart(){
+  const ys=YEARS.filter(y=>data[y]);
+  const series=POOLS.map((p,si)=>({p,col:si?'var(--rope-a)':'var(--accent)',v:ys.map(y=>{const es=entries.filter(e=>e.y===y&&e.pool===p);return es.length?Math.max(...es.map(e=>e.pts)):null;})})).filter(s=>s.v.some(v=>v!=null));
+  const vals=series.flatMap(s=>s.v).filter(v=>v!=null); if(!vals.length) return '<div class="note">記録がありません</div>';
+  const W=360,H=180,L=44,R=14,T=16,B=26; let mx=Math.max(...vals),mn=Math.min(...vals); const pad=Math.max(20,(mx-mn)*.2); mx=Math.ceil((mx+pad)/50)*50; mn=Math.max(0,Math.floor((mn-pad)/50)*50);
+  const x=i=>L+i*(W-L-R)/(ys.length-1); const yv=v=>T+(1-(v-mn)/(mx-mn))*(H-T-B);
+  let s=`<div class="legend">${series.map(se=>`<span><i style="background:${se.col}"></i>${se.p}</span>`).join('')}</div><svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="年ごとのベストポイント">`;
+  s+=[mn,(mn+mx)/2,mx].map(t=>`<line x1="${L}" x2="${W-R}" y1="${yv(t)}" y2="${yv(t)}" stroke="var(--line)"/><text x="${L-6}" y="${yv(t)+3}" text-anchor="end">${fmt(Math.round(t))}</text>`).join('');
+  ys.forEach((y,i)=>{ s+=`<text x="${x(i)}" y="${H-8}" text-anchor="middle">${y}</text>`; });
+  series.forEach((se,si)=>{ const P=se.v.map((v,i)=>v==null?null:[x(i),yv(v)]).filter(Boolean);
+    if(P.length>1) s+=`<polyline points="${P.map(p=>p.join(',')).join(' ')}" fill="none" stroke="${se.col}" stroke-width="2.5"/>`;
+    se.v.forEach((v,i)=>{ if(v==null) return; const px=x(i),py=yv(v); s+=`<circle cx="${px}" cy="${py}" r="4.5" fill="${se.col}" stroke="var(--surface)" stroke-width="2"/><text x="${px}" y="${si?py+16:py-9}" text-anchor="middle" style="fill:var(--fg);font-weight:600">${fmt(v)}</text>`; }); });
+  return s+'</svg>';
+}
+const COLS=[['y','年',1],['pool','プール',0],['ev','種目',0],['club','所属',0],['age','年齢区分',1],['time','タイム',1],['pts','ポイント',1],['rank','総合順位',1],['gr','区分内順位',1],['hs','偏差値',1],['meet','競技会',0]];
+function renderEntries(){
+  const es=entries.filter(pf).sort((a,b)=>{ let d; if(sortKey==='ev') d=evSort(a.ev,b.ev); else if(typeof a[sortKey]==='number') d=a[sortKey]-b[sortKey]; else d=String(a[sortKey]).localeCompare(String(b[sortKey]),'ja'); return d*sortDir || b.pts-a.pts; });
+  $('#entN').textContent=es.length+(poolFilter==='all'?'':`（${poolFilter}）`);
+  $('#entTbl').innerHTML=`<table><thead><tr>${COLS.map(([k,l,n])=>`<th class="${n?'n':''}" data-k="${k}">${l}${sortKey===k?(sortDir>0?' ▲':' ▼'):''}</th>`).join('')}</tr></thead><tbody>`+
+   es.map(e=>{ const i=entries.indexOf(e); return `<tr tabindex="0" data-i="${i}"><td class="n">${e.y}</td><td>${poolTag(e.pool)}</td><td>${esc(e.ev)}</td><td>${esc(e.club)}</td><td class="n">${ageLbl(e.age)}</td><td class="n">${esc(e.time)}</td><td class="n">${fmt(e.pts)}</td><td class="n">${fmt(e.rank)}<span class="muted"> / ${fmt(e.tot)}</span></td><td class="n">${e.gr?`<span class="pill ${e.gr<=3?'top':''}">${e.gr}位</span><span class="muted"> / ${e.gn}</span>`:'—'}</td><td class="n">${hsTxt(e.hs)}</td><td class="meet">${esc(e.meet)}</td></tr>`; }).join('')+'</tbody></table>';
+}
+$('#person').addEventListener('click',e=>{
+  const sb=e.target.closest('#poolSeg button'); if(sb){ poolFilter=sb.dataset.p; document.querySelectorAll('#poolSeg button').forEach(b=>b.setAttribute('aria-pressed',b===sb)); renderMatrix(); renderEntries(); return; }
+  const th=e.target.closest('#entTbl th'); if(th){ const k=th.dataset.k; if(sortKey===k) sortDir*=-1; else {sortKey=k;sortDir=(k==='ev'||k==='meet'||k==='pool'||k==='club')?1:-1;} renderEntries(); return; }
+  const tr=e.target.closest('#entTbl tbody tr'); if(tr) showRanking(entries[+tr.dataset.i]);
+});
+$('#person').addEventListener('keydown',e=>{ const tr=e.target.closest('#entTbl tbody tr'); if(tr&&e.key==='Enter') showRanking(entries[+tr.dataset.i]); });
+
+// ---------- ranking around an entry ----------
+function showRanking(en){
+  const best=new Map(); const k0=gkey(en);
+  for(const r of data[en.y]) if(gkey(r)===k0){ const o=best.get(r.nk); if(!o||r.pts>o.pts) best.set(r.nk,r); }
+  best.set(en.nk,en);
+  const list=[...best.values()].sort((a,b)=>b.pts-a.pts);
+  let rk=0; const gr=list.map((r,i)=>(i===0||r.pts<list[i-1].pts)?(rk=i+1):rk);
+  const me=list.findIndex(r=>r.nk===en.nk);
+  const show=new Set(); for(let i=0;i<Math.min(10,list.length);i++) show.add(i); for(let i=Math.max(0,me-7);i<=Math.min(list.length-1,me+7);i++) show.add(i);
+  let prev=-1, rows='';
+  [...show].sort((a,b)=>a-b).forEach(i=>{ if(prev>=0&&i>prev+1) rows+=`<tr><td colspan="6" class="muted" style="text-align:center">…</td></tr>`; const r=list[i];
+    rows+=`<tr class="${i===me?'me':''}"><td class="n">${gr[i]}</td><td>${esc(r.name)}</td><td>${esc(r.club)}</td><td class="n">${esc(r.time)}</td><td class="n">${fmt(r.pts)}</td><td class="meet">${esc(r.meet)}</td></tr>`; prev=i; });
+  const el=$('#ranking'); el.hidden=false;
+  el.innerHTML=`<div class="row" style="justify-content:space-between;margin-bottom:10px"><div><div class="label">区分ランキング（各選手のベスト）</div><h2>${en.y}年 · ${esc(en.sex)} · ${esc(en.pool)} · ${esc(en.ev)} · ${ageLbl(en.age)}歳</h2></div><div class="note">${fmt(list.length)}人中 ${me>=0?gr[me]+'位':''}${hensa(en)!=null?' · 偏差値 '+hsTxt(hensa(en)):''}</div></div>
+   <div class="tbl"><table><thead><tr><th class="n">順位</th><th>名前</th><th>所属</th><th class="n">タイム</th><th class="n">ポイント</th><th>競技会</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  el.scrollIntoView({behavior:reduceMotion()?'auto':'smooth',block:'start'});
+}
+
+renderChips(); boot();
+})();
+</script>
+
+</body></html>
