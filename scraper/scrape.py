@@ -19,7 +19,8 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-URL = "https://jambowpoint.jp/?page_id=734"
+# 検索フォームは ?page_id=734 のページに iframe で埋め込まれているので、中身のページを直接開く
+URL = "https://jambowpoint.jp/jambowpoint-test/point-rank.aspx"
 # 区分番号はサイトのデータ形式（0:男長 1:男短 2:女長 3:女短）に合わせる
 GROUPS = [(0, "男性", "長水路"), (1, "男性", "短水路"), (2, "女性", "長水路"), (3, "女性", "短水路")]
 ROOT = Path(__file__).resolve().parent.parent
@@ -44,6 +45,19 @@ window.__jb = {
     if (!r) return false;
     r.click(); r.checked = true; r.dispatchEvent(new Event('change', { bubbles: true }));
     return true;
+  },
+  radioState(text){
+    const r = [...document.querySelectorAll('input[type=radio]')].find(i => this.radioText(i) === text);
+    return r ? (r.checked ? 'checked' : 'unchecked') : 'missing';
+  },
+  selectText(name, text){
+    const s = document.querySelector(`select[name="${name}"]`);
+    if (!s) return 'no-select';
+    const o = [...s.options].find(o => this.clean(o.text) === text);
+    if (!o) return 'no-option';
+    if (s.value === o.value) return 'same';
+    s.value = o.value; s.dispatchEvent(new Event('change', { bubbles: true }));
+    return 'changed';
   },
   selectYear(y){
     const s = [...document.querySelectorAll('select')].find(s =>
@@ -113,13 +127,54 @@ def sig(r):
     return json.dumps([r["rows"][0], r["rows"][-1], len(r["rows"])], ensure_ascii=False)
 
 
+SEX_LABEL = {"男性": "男子", "女性": "女子"}
+
+
+def settle(page):
+    """ポストバックによる再読み込みが終わるのを待つ"""
+    page.wait_for_timeout(800)
+    try:
+        page.wait_for_load_state("load", timeout=WAIT_TIMEOUT * 1000)
+    except Exception:
+        pass
+    end = time.time() + WAIT_TIMEOUT
+    while time.time() < end:
+        if safe_eval(page, "() => !!(window.__jb && document.readyState === 'complete')"):
+            return
+        time.sleep(0.3)
+
+
+def select_radio(page, text):
+    for _ in range(4):
+        st = safe_eval(page, "t => window.__jb.radioState(t)", text)
+        if st == "checked":
+            return
+        if st == "unchecked":
+            safe_eval(page, "t => window.__jb.clickRadio(t)", text)
+        settle(page)
+    raise RuntimeError(f"「{text}」を選択できませんでした（状態: {st}）")
+
+
+def select_dup(page):
+    """年齢区分の「重複あり」（同じ選手の複数種目・複数記録をすべて出す）を選ぶ"""
+    for _ in range(4):
+        st = safe_eval(page, "() => window.__jb.selectText('DDLNenrei2', '重複あり')")
+        if st == "same":
+            return
+        if st in ("no-select", "no-option"):
+            raise RuntimeError(f"「重複あり」を選択できませんでした（{st}）")
+        settle(page)
+    raise RuntimeError("「重複あり」を選択できませんでした")
+
+
 def scrape_group(page, year, g, sex, pool, max_pages):
     log(f"--- {year}年 {sex} {pool} ---")
-    page.goto(URL, wait_until="domcontentloaded", timeout=90_000)
-    page.wait_for_timeout(1500)
+    page.goto(URL, wait_until="load", timeout=90_000)
+    settle(page)
+    # 選択肢を押すたびにページが再読み込み（ポストバック）されるので、1つずつ反映を待つ
     for text in ["ナショナルポイント", "年齢区分", pool, sex, "年単位", "ポイントランキング"]:
-        if not safe_eval(page, "t => window.__jb.clickRadio(t)", text):
-            raise RuntimeError(f"「{text}」の選択肢が見つかりません")
+        select_radio(page, text)
+    select_dup(page)
     res = safe_eval(page, "y => window.__jb.selectYear(y)", str(year))
     if res != "ok":
         raise RuntimeError(f"年の選択に失敗しました ({res})")
@@ -127,7 +182,8 @@ def scrape_group(page, year, g, sex, pool, max_pages):
         raise RuntimeError("検索ボタンが見つかりません")
     page.click('[data-jb="search"]')
 
-    want = [f"{sex}", f"{pool}", f"{year}"]
+    # 検索結果の条件表示では 男性→男子・女性→女子 と書かれる
+    want = [f"性別:{SEX_LABEL[sex]}", f"プール種別:{pool}", f"{year}年"]
     r = wait_for(page, lambda r: r["rows"] and all(w in r["cond"] for w in want), "検索結果")
     m = re.search(r"対象人数[:：]\s*([\d,]+)", r["cond"])
     expected = int(m.group(1).replace(",", "")) if m else None
